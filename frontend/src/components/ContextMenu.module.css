@@ -1,0 +1,66 @@
+.contextMenu {
+  position: fixed;
+  background: rgba(19, 27, 46, 0.95);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7), 0 0 25px rgba(160, 120, 255, 0.25);
+  border-radius: 16px;
+  padding: 0.5rem;
+  min-width: 210px;
+  z-index: 1000;
+  font-size: 0.88rem;
+  animation: slideUpFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  padding: 0.65rem 0.9rem;
+  color: var(--text-main);
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  width: 100%;
+  text-align: left;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.menuItem:hover {
+  background: rgba(160, 120, 255, 0.15);
+  color: #ffffff;
+  border-color: rgba(160, 120, 255, 0.3);
+  transform: translateX(3px);
+}
+
+.icon {
+  margin-right: 0.75rem;
+  color: var(--primary);
+  transition: transform 0.2s;
+}
+
+.menuItem:hover .icon {
+  transform: scale(1.15);
+}
+
+.danger {
+  color: var(--error);
+}
+
+.danger .icon {
+  color: var(--error);
+}
+
+.danger:hover {
+  background: rgba(255, 180, 171, 0.15);
+  color: #ffffff;
+  border-color: rgba(255, 180, 171, 0.3);
+}
+
+.divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0.35rem 0.5rem;
+}
