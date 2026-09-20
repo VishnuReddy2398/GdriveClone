@@ -48,8 +48,9 @@ public class SecurityConfig {
             
             // 3. Define authorization rules
             .authorizeHttpRequests(auth -> auth
-                // Allow public access to auth endpoints (login, register) and Actuator health
+                // Allow public access to auth endpoints (login, register), Actuator, and health check
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/health", "/api/health").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
                 // Allow public access to shared links
                 .requestMatchers("/api/share/access/**").permitAll()

@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.clone</groupId>
 	<artifactId>drive</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>PersonalDrive</name>
 	<description>Personal Drive Clone</description>
 	<url/>
@@ -164,6 +164,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

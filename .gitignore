@@ -1,39 +1,60 @@
-HELP.md
+# Compiled output
 target/
-.mvn/wrapper/maven-wrapper.jar
+build/
+dist/
+frontend/dist/
+frontend/build/
 !**/src/main/**/target/
 !**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
-.vscode/
+# Package managers & dependencies
+node_modules/
+frontend/node_modules/
+.pnpm-store/
 
-# Local/test files
+# Environment variables & secrets (CRITICAL FOR DEVOPS)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+credentials.json
+secrets/
+
+# Storage & Runtime Data
+data/
+storage/
+*.log
+logs/
+
+# IDE & Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache
+.apt_generated
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+
+# OS metadata
 .DS_Store
+Thumbs.db
+
+# Test scratch outputs
 log2.json
 login.json
 reg.json
+HELP.md
