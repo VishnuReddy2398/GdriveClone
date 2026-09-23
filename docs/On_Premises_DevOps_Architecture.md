@@ -54,7 +54,7 @@ sudo apt update
 sudo apt install -y ansible sshpass
 ```
 
-### Step 2: Set up Passwordless SSH (The Production Way)
+### Step 2: Set up Passwordless SSH & Sudo (The Production Way)
 Ansible needs a way to securely connect to the other VMs without prompting for a password every time. We do this using SSH Keys.
 On the DevOps VM, run:
 ```bash
@@ -63,6 +63,13 @@ ssh-copy-id user@192.168.56.20
 ssh-copy-id user@192.168.56.30
 ```
 *(Now the DevOps VM can securely connect to DEV and PROD without a password!)*
+
+**Important `visudo` Step:**
+Ansible also needs to run commands as `root` (like installing packages) without being asked for a password. 
+You must log into VM 2 and VM 3, type `sudo visudo`, and add this line to the bottom of the file:
+```text
+user ALL=(ALL) NOPASSWD:ALL
+```
 
 ### Step 3: Create the Inventory
 Create a file named `inventory.ini`:
@@ -211,5 +218,8 @@ pipeline {
 ### A. Centralized Logging (ELK Stack)
 If a user gets an error in Production, you do not log into the VM. You install **Fluentd** on VM 3. It automatically sucks up every log from every pod and sends them to Elasticsearch. You use Kibana in your Windows browser to search the logs.
 
-### B. Secret Management (HashiCorp Vault)
-You run Vault on VM 1. You log into the Vault UI (`http://192.168.56.10:8200`) to save passwords. The `External Secrets Operator` running on VM 2 and VM 3 automatically fetches them in real-time.
+### B. Monitoring & Alerting (Prometheus & Grafana)
+You install Prometheus and Grafana on the DEV and PROD clusters. Prometheus constantly scrapes metrics (CPU, memory, pod crashes). You build dashboards in Grafana. If a pod crashes 3 times, Prometheus sends an alert to PagerDuty to wake up the DevOps engineer.
+
+### C. Secret Management (HashiCorp Vault)
+You run Vault on VM 1. You log into the Vault UI (`http://192.168.56.10:8200`) to save passwords. The `External Secrets Operator` running on VM 2 and VM 3 automatically fetches them in real-time. This replaces Kubernetes standard Secrets so developers never see the raw passwords.
