@@ -54,7 +54,17 @@ sudo apt update
 sudo apt install -y ansible sshpass
 ```
 
-### Step 2: Create the Inventory
+### Step 2: Set up Passwordless SSH (The Production Way)
+Ansible needs a way to securely connect to the other VMs without prompting for a password every time. We do this using SSH Keys.
+On the DevOps VM, run:
+```bash
+ssh-keygen -t rsa -b 4096 -N ""
+ssh-copy-id user@192.168.56.20
+ssh-copy-id user@192.168.56.30
+```
+*(Now the DevOps VM can securely connect to DEV and PROD without a password!)*
+
+### Step 3: Create the Inventory
 Create a file named `inventory.ini`:
 ```ini
 [kubernetes]
@@ -62,7 +72,7 @@ Create a file named `inventory.ini`:
 192.168.56.30
 ```
 
-### Step 3: Write the Kubernetes Automation Playbook
+### Step 4: Write the Kubernetes Automation Playbook
 Create a file named `install_k3s.yaml` to automatically install Kubernetes on the DEV and PROD servers:
 ```yaml
 - hosts: kubernetes
@@ -71,9 +81,9 @@ Create a file named `install_k3s.yaml` to automatically install Kubernetes on th
       shell: curl -sfL https://get.k3s.io | sh -
 ```
 
-### Step 4: Run Ansible!
+### Step 5: Run Ansible!
 ```bash
-ansible-playbook -i inventory.ini install_k3s.yaml -k
+ansible-playbook -i inventory.ini install_k3s.yaml
 ```
 *(Ansible instantly connects via SSH and installs Kubernetes on both VMs at the exact same time!)*
 
