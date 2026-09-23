@@ -21,7 +21,10 @@ spec:
         - name: POSTGRES_USER
           value: "gdrive_user"
         - name: POSTGRES_PASSWORD
-          value: "gdrive_password"
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: password
         ports:
         - containerPort: 5432
 ---

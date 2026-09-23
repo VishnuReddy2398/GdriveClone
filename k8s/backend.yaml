@@ -22,7 +22,10 @@ spec:
         - name: SPRING_DATASOURCE_USERNAME
           value: "gdrive_user"
         - name: SPRING_DATASOURCE_PASSWORD
-          value: "gdrive_password"
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: password
         - name: SPRING_REDIS_HOST
           value: "redis"
         - name: SPRING_RABBITMQ_HOST
