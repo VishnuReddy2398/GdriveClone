@@ -26,7 +26,7 @@ For **each of the 3 VMs**, do the following:
 ### Step 3: Install Ubuntu OS
 1. Start the `DevOps-Server` VM. It will ask for an ISO file. Select your `ubuntu-server.iso`.
 2. Follow the Ubuntu installation wizard. 
-3. **Important:** When it asks about software to install, check the box for **OpenSSH Server**. (You need this to use terminal/Putty later).
+3. **Important:** When it asks about software to install, check the box for **OpenSSH Server**. (You need this to use Putty later).
 4. Finish the installation, reboot, and repeat for the other 2 VMs.
 
 ### Step 4: Get the IP Addresses
@@ -39,39 +39,52 @@ Look for `enp0s8` (Adapter 2). Note down the IP address for each VM.
 - **Dev VM:** `192.168.56.20`
 - **Prod VM:** `192.168.56.30`
 
-*(You can now minimize VirtualBox entirely. Open Windows PowerShell or Git Bash and use `ssh username@192.168.56.10` to control them!)*
+---
+
+## 💻 PHASE 2: Connecting from Windows (Putty & Browsers)
+
+You should never type inside the small VirtualBox window. Real DevOps engineers minimize VirtualBox and connect remotely.
+
+### 1. Connecting via Putty (SSH)
+1. Download and open **Putty** on your Windows machine.
+2. In the "Host Name (or IP address)" box, type `192.168.56.10`.
+3. Click **Open**. A black terminal will appear. Type your Ubuntu username and password.
+4. Repeat this to open separate Putty windows for DEV (`192.168.56.20`) and PROD (`192.168.56.30`).
+
+### 2. Accessing Web UI Tools from Windows
+Because of the "Host-only Adapter", your Windows web browser can directly access tools running on the VMs:
+- **Jenkins UI:** Open Chrome and go to `http://192.168.56.10:8080`
+- **SonarQube UI:** Open Chrome and go to `http://192.168.56.10:9000`
+- **Grafana UI:** Open Chrome and go to `http://192.168.56.30:3000`
 
 ---
 
-## 🚀 PHASE 2: Infrastructure Setup (Ansible)
+## 🚀 PHASE 3: Infrastructure Setup (Ansible)
 
 Instead of typing commands in all 3 VMs manually, DevOps engineers use **Ansible** to automate the installation.
 
 ### Step 1: Install Ansible on the DevOps VM
-SSH into the DevOps VM (`192.168.56.10`) from your Windows machine:
+Use Putty to connect to the DevOps VM (`192.168.56.10`):
 ```bash
 sudo apt update
 sudo apt install -y ansible sshpass
 ```
 
 ### Step 2: Set up Passwordless SSH & Sudo (The Production Way)
-Ansible needs a way to securely connect to the other VMs without prompting for a password every time. We do this using SSH Keys.
+Ansible needs a way to securely connect to the other VMs without prompting for a password. 
 On the DevOps VM, run:
 ```bash
 ssh-keygen -t rsa -b 4096 -N ""
 ssh-copy-id user@192.168.56.20
 ssh-copy-id user@192.168.56.30
 ```
-*(Now the DevOps VM can securely connect to DEV and PROD without a password!)*
-
 **Important `visudo` Step:**
-Ansible also needs to run commands as `root` (like installing packages) without being asked for a password. 
-You must log into VM 2 and VM 3, type `sudo visudo`, and add this line to the bottom of the file:
+Ansible also needs to run commands as `root`. You must log into VM 2 and VM 3 using Putty, type `sudo visudo`, and add this line to the bottom of the file:
 ```text
 user ALL=(ALL) NOPASSWD:ALL
 ```
 
-### Step 3: Create the Inventory
+### Step 3: Create the Inventory and Run Ansible
 Create a file named `inventory.ini`:
 ```ini
 [kubernetes]
@@ -79,8 +92,7 @@ Create a file named `inventory.ini`:
 192.168.56.30
 ```
 
-### Step 4: Write the Kubernetes Automation Playbook
-Create a file named `install_k3s.yaml` to automatically install Kubernetes on the DEV and PROD servers:
+Create a playbook named `install_k3s.yaml`:
 ```yaml
 - hosts: kubernetes
   tasks:
@@ -88,17 +100,16 @@ Create a file named `install_k3s.yaml` to automatically install Kubernetes on th
       shell: curl -sfL https://get.k3s.io | sh -
 ```
 
-### Step 5: Run Ansible!
+Run Ansible:
 ```bash
 ansible-playbook -i inventory.ini install_k3s.yaml
 ```
-*(Ansible instantly connects via SSH and installs Kubernetes on both VMs at the exact same time!)*
 
 ---
 
-## 🏗️ PHASE 3: Setting up the DevOps Tooling
+## 🏗️ PHASE 4: Setting up the DevOps Tooling
 
-On the DevOps VM (`192.168.56.10`), we need to install our CI/CD pipeline tools.
+On the DevOps VM (`192.168.56.10`), we install our CI/CD pipeline tools.
 
 **1. Install Docker:**
 ```bash
@@ -106,13 +117,12 @@ sudo apt update && sudo apt install -y docker.io
 ```
 
 **2. Start a Local Docker Registry:**
-We don't use Docker Hub. We run a private registry locally.
+We run a private registry locally so our code isn't exposed to the public.
 ```bash
 docker run -d -p 5000:5000 --restart=always --name registry registry:2
 ```
 
 **3. Start SonarQube:**
-SonarQube scans the Java code for vulnerabilities.
 ```bash
 docker run -d --name sonarqube -p 9000:9000 sonarqube:lts
 ```
@@ -124,12 +134,12 @@ docker run -d -p 8080:8080 -v /var/run/docker.sock:/var/run/docker.sock jenkins/
 
 ---
 
-## 🔐 PHASE 4: Credential Connections (Jenkins -> Kubernetes)
+## 🔐 PHASE 5: Credential Connections (Jenkins -> Kubernetes)
 
 Jenkins is running on VM 1. How does it get permission to deploy code to VM 2 and VM 3?
 
 **Step 1: Get the Kubeconfig**
-SSH into VM 2 (DEV) and print the master password file:
+Use Putty to connect to VM 2 (DEV) and print the master password file:
 ```bash
 sudo cat /etc/rancher/k3s/k3s.yaml
 ```
@@ -144,82 +154,63 @@ sudo cat /etc/rancher/k3s/k3s.yaml
 
 ---
 
-## ⚙️ PHASE 5: The Automated CI/CD Jenkinsfile
+## ⚙️ PHASE 6: The Automated CI/CD Jenkinsfile
 
-Here is the exact `Jenkinsfile` that builds the code, runs SonarQube, deploys to DEV, and waits for manual approval to deploy to PROD.
+*(The Jenkinsfile remains exactly as written in the repository: 1 Pipeline that builds once, deploys to DEV, waits for approval, and deploys the same image to PROD).*
 
-```groovy
-pipeline {
-    agent any
-    environment {
-        // Points to the local registry on VM 1
-        REGISTRY = "192.168.56.10:5000"
-        IMAGE_NAME = "${REGISTRY}/gdrive-backend"
-        IMAGE_TAG = "${GIT_COMMIT.take(7)}" 
-    }
-    stages {
-        stage('Checkout & Unit Tests') {
-            steps {
-                checkout scm
-                sh './mvnw clean test'
-            }
-        }
+---
 
-        stage('SonarQube Security Scan') {
-            steps {
-                // Scans the code and sends results to VM 1 port 9000
-                withSonarQubeEnv('SonarQube-Server') {
-                    sh './mvnw sonar:sonar -Dsonar.projectKey=gdriveclone'
-                }
-            }
-        }
+## 🌐 PHASE 7: Namecheap Domain Configuration (finbudi.com)
 
-        stage('Build & Push to Local Registry') {
-            steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
-            }
-        }
+If you own `finbudi.com` on Namecheap, you want real users on the internet to hit your PROD cluster. 
+*(Note: This requires you to port-forward your physical home router to VM 3. Look up "How to port forward port 80/443 on my router").*
 
-        stage('Deploy to DEV (VM 2)') {
-            steps {
-                // Fetch the secure DEV kubeconfig from Jenkins Credentials
-                withCredentials([file(credentialsId: 'dev-kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh "kubectl --kubeconfig=$KUBECONFIG set image deployment/backend backend=${IMAGE_NAME}:${IMAGE_TAG}"
-                    sh "kubectl --kubeconfig=$KUBECONFIG rollout status deployment/backend"
-                }
-            }
-        }
+**Step 1: Get your Home's Public IP**
+Google "What is my IP". Let's assume it is `203.0.113.50`.
 
-        stage('Production Approval') {
-            input {
-                message 'DEV is stable. Deploy to PRODUCTION Cluster (VM 3)?'
-                ok 'Approve'
-            }
-        }
+**Step 2: Namecheap DNS Configuration**
+1. Log into Namecheap and go to the **Advanced DNS** tab for `finbudi.com`.
+2. Delete any existing parking records.
+3. Add an **A Record**:
+   - Host: `@`
+   - Value: `203.0.113.50` (Your home public IP)
+   - TTL: Automatic
+4. Add a **CNAME Record**:
+   - Host: `www`
+   - Value: `finbudi.com`
 
-        stage('Deploy to PROD (VM 3)') {
-            steps {
-                withCredentials([file(credentialsId: 'prod-kubeconfig', variable: 'KUBECONFIG')]) {
-                    // Deploy the EXACT SAME IMAGE to production. Never rebuild!
-                    sh "kubectl --kubeconfig=$KUBECONFIG set image deployment/backend backend=${IMAGE_NAME}:${IMAGE_TAG}"
-                    sh "kubectl --kubeconfig=$KUBECONFIG rollout status deployment/backend"
-                }
-            }
-        }
-    }
-}
+**Step 3: The Kubernetes Ingress**
+In your `k8s/ingress.yaml` file on the PROD cluster, the host must match:
+```yaml
+spec:
+  rules:
+  - host: finbudi.com
 ```
 
 ---
 
-## 🛡️ PHASE 6: Day 2 Operations
+## 🛡️ PHASE 8: Day 2 Operations (PLG Stack & Vault)
 
-### A. Centralized Logging (ELK Stack)
-If a user gets an error in Production, you do not log into the VM. You install **Fluentd** on VM 3. It automatically sucks up every log from every pod and sends them to Elasticsearch. You use Kibana in your Windows browser to search the logs.
+We do not use ELK; the modern, lightweight Kubernetes standard is the **PLG Stack** (Prometheus, Loki, Grafana).
 
-### B. Monitoring & Alerting (Prometheus & Grafana)
-You install Prometheus and Grafana on the DEV and PROD clusters. Prometheus constantly scrapes metrics (CPU, memory, pod crashes). You build dashboards in Grafana. If a pod crashes 3 times, Prometheus sends an alert to PagerDuty to wake up the DevOps engineer.
+### A. Monitoring Metrics (Prometheus & Grafana)
+We need to monitor if the pods crash or run out of memory. 
+1. Use Putty to SSH into VM 3 (PROD).
+2. Install the Prometheus/Grafana stack using Helm:
+   ```bash
+   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+   helm install monitoring prometheus-community/kube-prometheus-stack
+   ```
+3. Open Grafana in your Windows browser (`http://192.168.56.30:3000`). It comes with pre-built dashboards showing CPU and RAM for every pod.
+
+### B. Centralized Logging (Loki & Promtail)
+Instead of ELK, we install **Promtail** (which sucks up logs) and **Loki** (which stores them).
+1. On VM 3, run:
+   ```bash
+   helm repo add grafana https://grafana.github.io/helm-charts
+   helm install loki grafana/loki-stack
+   ```
+2. Now, in the same Grafana dashboard you used for Prometheus, you can add Loki as a data source and search all logs across the entire cluster instantly.
 
 ### C. Secret Management (HashiCorp Vault)
-You run Vault on VM 1. You log into the Vault UI (`http://192.168.56.10:8200`) to save passwords. The `External Secrets Operator` running on VM 2 and VM 3 automatically fetches them in real-time. This replaces Kubernetes standard Secrets so developers never see the raw passwords.
+You run Vault on VM 1. You log into the Vault UI (`http://192.168.56.10:8200`) to save passwords. The `External Secrets Operator` running on VM 2 and VM 3 automatically fetches them in real-time. This replaces standard Secrets so developers never see raw passwords.
